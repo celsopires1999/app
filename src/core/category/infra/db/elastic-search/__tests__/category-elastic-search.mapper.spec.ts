@@ -10,7 +10,7 @@ import {
   CATEGORY_DOCUMENT_TYPE_NAME,
   CategoryDocument,
   CategoryElasticSearchMapper,
-} from '../elastic-search/es-mapping';
+} from '../es-mapping';
 
 describe('CategoryElasticSearchMapper', () => {
   let categoryDocument: CategoryDocument;
