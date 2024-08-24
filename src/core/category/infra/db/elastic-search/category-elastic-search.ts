@@ -1,8 +1,8 @@
+import { Category, CategoryId } from '@core/category/domain/category.aggregate';
+import { ICategoryRepository } from '@core/category/domain/category.repository';
+import { SortDirection } from '@core/shared/domain/repository/search-params';
+import { LoadEntityError } from '@core/shared/domain/validators/validation.error';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
-import { SortDirection } from '../../../../shared/domain/repository/search-params';
-import { LoadEntityError } from '../../../../shared/domain/validators/validation.error';
-import { Category, CategoryId } from '../../../domain/category.aggregate';
-import { ICategoryRepository } from '../../../domain/category.repository';
 
 export const CATEGORY_DOCUMENT_TYPE_NAME = 'Category';
 
@@ -56,11 +56,24 @@ export class CategoryElasticSearchRepository implements ICategoryRepository {
     private index: string,
   ) {}
 
-  insert(entity: Category): Promise<void> {
-    throw new Error('Method not implemented.');
+  async insert(entity: Category): Promise<void> {
+    await this.esClient.index({
+      index: this.index,
+      id: entity.category_id.id,
+      body: CategoryElasticSearchMapper.toDocument(entity),
+      refresh: true,
+    });
   }
-  bulkInsert(entities: Category[]): Promise<void> {
-    throw new Error('Method not implemented.');
+
+  async bulkInsert(entities: Category[]): Promise<void> {
+    await this.esClient.bulk({
+      index: this.index,
+      refresh: true,
+      body: entities.flatMap((entity) => [
+        { index: { _id: entity.category_id.id } },
+        CategoryElasticSearchMapper.toDocument(entity),
+      ]),
+    });
   }
   findById(id: CategoryId): Promise<Category | null> {
     throw new Error('Method not implemented.');
