@@ -1,4 +1,5 @@
 import { Category, CategoryId } from '@core/category/domain/category.aggregate';
+import { esMapping } from '@core/shared/infra/db/elastic-search/es-mapping';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import {
   CategoryElasticSearchMapper,
@@ -19,6 +20,11 @@ describe('CategoryElasticSearchRepository Integration Tests', () => {
     } catch (e) {}
     const result = await esClient.indices.create({
       index: 'categories',
+    });
+    //apply mapping
+    await esClient.indices.putMapping({
+      index: 'categories',
+      body: esMapping,
     });
     console.log(result);
     repository = new CategoryElasticSearchRepository(esClient, 'categories');
