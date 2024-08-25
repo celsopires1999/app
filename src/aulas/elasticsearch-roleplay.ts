@@ -42,7 +42,7 @@ export async function insertDocument() {
       },
     });
     console.log(result);
-    return result;
+    return result.body;
   } catch (error) {
     console.error('An error occurred:', error);
   }
