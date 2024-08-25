@@ -1,4 +1,5 @@
 import { Category, CategoryId } from '@core/category/domain/category.aggregate';
+import { NotFoundError } from '@core/shared/domain/errors/not-found.error';
 import { esMapping } from '@core/shared/infra/db/elastic-search/es-mapping';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import {
@@ -18,7 +19,7 @@ describe('CategoryElasticSearchRepository Integration Tests', () => {
         index: 'categories',
       });
     } catch (e) {}
-    const result = await esClient.indices.create({
+    await esClient.indices.create({
       index: 'categories',
     });
     //apply mapping
@@ -69,7 +70,7 @@ describe('CategoryElasticSearchRepository Integration Tests', () => {
     expect(foundCategories[1].toJSON()).toStrictEqual(categories[1].toJSON());
   });
 
-  it('should find a entity by id', async () => {
+  it('should finds a entity by id', async () => {
     let entityFound = await repository.findById(new CategoryId());
     expect(entityFound).toBeNull();
 
@@ -177,7 +178,7 @@ describe('CategoryElasticSearchRepository Integration Tests', () => {
     expect(JSON.stringify(entities)).toBe(JSON.stringify([entity]));
   });
 
-  it('should return categories list by ids', async () => {
+  it('should return a categories list by ids', async () => {
     const categories = Category.fake().theCategories(2).build();
 
     await repository.bulkInsert(categories);
@@ -217,5 +218,44 @@ describe('CategoryElasticSearchRepository Integration Tests', () => {
     expect(existsResult2.not_exists).toHaveLength(1);
     expect(existsResult2.exists[0]).toBeValueObject(category.category_id);
     expect(existsResult2.not_exists[0]).toBeValueObject(categoryId1);
+  });
+
+  it('should throw error on update when a entity not found', async () => {
+    const entity = Category.fake().aCategory().build();
+    await expect(repository.update(entity)).rejects.toThrow(
+      new NotFoundError(entity.category_id.id, Category),
+    );
+  });
+
+  it('should update a entity', async () => {
+    const entity = Category.fake().aCategory().build();
+    await repository.insert(entity);
+
+    entity.changeName('Movie updated');
+    await repository.update(entity);
+
+    const entityFound = await repository.findById(entity.category_id);
+    expect(entity.toJSON()).toStrictEqual(entityFound!.toJSON());
+  });
+
+  it('should throw error on delete when a entity not found', async () => {
+    const categoryId = new CategoryId();
+    await expect(repository.delete(categoryId)).rejects.toThrow(
+      new NotFoundError(categoryId.id, Category),
+    );
+  });
+
+  it('should delete a entity', async () => {
+    const entity = new Category({
+      category_id: new CategoryId(),
+      name: 'Movie',
+      description: 'some description',
+      is_active: false,
+      created_at: new Date(),
+    });
+    await repository.insert(entity);
+
+    await repository.delete(entity.category_id);
+    await expect(repository.findById(entity.category_id)).resolves.toBeNull();
   });
 });
