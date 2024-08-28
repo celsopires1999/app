@@ -1,10 +1,9 @@
-version: '3'
-
 services:
   app:
     build:
-      context: .
       dockerfile: Dockerfile.dev
+      args:
+        - DOCKER_GROUP_ID=1001
     command: .docker/start.dev.sh
     volumes:
       - .:/home/node/app
