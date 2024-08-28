@@ -2,10 +2,12 @@ import { Category, CategoryId } from '@core/category/domain/category.aggregate';
 import { CategoryElasticSearchRepository } from '@core/category/infra/db/elastic-search/category-elastic-search';
 import { NotFoundError } from '@core/shared/domain/errors/not-found.error';
 import { setupElasticsearch } from '@core/shared/infra/testing/global-helpers';
-import { GetCategoryUseCase } from '../get-category.use-case';
+import { DeleteCategoryUseCase } from '../delete-category.use-case';
 
-describe('GetCategoryUseCase Integration Tests', () => {
-  let useCase: GetCategoryUseCase;
+describe('DeleteCategoryUseCase Integration Tests', () => {
+  type NewType = DeleteCategoryUseCase;
+
+  let useCase: NewType;
   let repository: CategoryElasticSearchRepository;
 
   const esHelper = setupElasticsearch();
@@ -15,27 +17,21 @@ describe('GetCategoryUseCase Integration Tests', () => {
       esHelper.esClient,
       esHelper.indexName,
     );
-    useCase = new GetCategoryUseCase(repository);
+    useCase = new DeleteCategoryUseCase(repository);
   });
 
-  it('should throws error when aggregate not found', async () => {
+  it('should throws error when entity not found', async () => {
     const categoryId = new CategoryId();
     await expect(() => useCase.execute({ id: categoryId.id })).rejects.toThrow(
       new NotFoundError(categoryId.id, Category),
     );
   });
 
-  it('should return a category', async () => {
+  it('should delete a category', async () => {
     const category = Category.fake().aCategory().build();
     await repository.insert(category);
-    const output = await useCase.execute({ id: category.category_id.id });
-    expect(output).toStrictEqual({
-      id: category.category_id.id,
-      name: category.name,
-      description: category.description,
-      is_active: category.is_active,
-      created_at: category.created_at,
-      deleted_at: null,
-    });
+    await useCase.execute({ id: category.category_id.id });
+    const result = await repository.findById(category.category_id);
+    expect(result?.deleted_at).not.toBeNull();
   });
 });

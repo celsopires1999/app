@@ -4,7 +4,7 @@ import { IUseCase } from '@core/shared/application/use-case-interface';
 import {
   CategoryOutput,
   CategoryOutputMapper,
-} from '../../common/category-output';
+} from '../common/category-output';
 
 export class ListAllCategoriesUseCase
   implements IUseCase<ListCategoriesInput, ListCategoriesOutput>

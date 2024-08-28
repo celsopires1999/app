@@ -2,32 +2,27 @@ import { Category, CategoryId } from '@core/category/domain/category.aggregate';
 import { ICategoryRepository } from '@core/category/domain/category.repository';
 import { IUseCase } from '@core/shared/application/use-case-interface';
 import { NotFoundError } from '@core/shared/domain/errors/not-found.error';
-import {
-  CategoryOutput,
-  CategoryOutputMapper,
-} from '../common/category-output';
 
-export class GetCategoryUseCase
-  implements IUseCase<GetCategoryInput, GetCategoryOutput>
+export class DeleteCategoryUseCase
+  implements IUseCase<DeleteCategoryInput, DeleteCategoryOutput>
 {
   constructor(private categoryRepo: ICategoryRepository) {}
 
-  async execute(input: GetCategoryInput): Promise<GetCategoryOutput> {
+  async execute(input: DeleteCategoryInput): Promise<DeleteCategoryOutput> {
     const categoryId = new CategoryId(input.id);
-    const category = await this.categoryRepo.findOneBy({
-      category_id: categoryId,
-      is_active: true,
-    });
+    const category = await this.categoryRepo.findById(categoryId);
     if (!category) {
       throw new NotFoundError(input.id, Category);
     }
 
-    return CategoryOutputMapper.toOutput(category);
+    category.markAsDeleted();
+
+    await this.categoryRepo.update(category);
   }
 }
 
-export type GetCategoryInput = {
+export type DeleteCategoryInput = {
   id: string;
 };
 
-export type GetCategoryOutput = CategoryOutput;
+export type DeleteCategoryOutput = void;
