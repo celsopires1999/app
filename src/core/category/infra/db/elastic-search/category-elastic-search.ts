@@ -1,7 +1,7 @@
 import { Category, CategoryId } from '@core/category/domain/category.aggregate';
-import { ICategoryRepository } from '@core/category/domain/category.repository';
 import { NotFoundError } from '@core/shared/domain/errors/not-found.error';
 import { SortDirection } from '@core/shared/domain/repository/search-params';
+import { SearchResult } from '@core/shared/domain/repository/search-result';
 import { LoadEntityError } from '@core/shared/domain/validators/validation.error';
 import {
   GetGetResult,
@@ -61,6 +61,7 @@ export class CategoryElasticSearchMapper {
   }
 }
 
+//@ts-expect-error - chore
 export class CategoryElasticSearchRepository implements ICategoryRepository {
   sortableFields: string[] = ['name', 'created_at'];
   sortableFieldsMap: Record<string, string> = {
@@ -354,6 +355,29 @@ export class CategoryElasticSearchRepository implements ICategoryRepository {
     if (result.body.updated == 0) {
       throw new NotFoundError(entity.category_id.id, Category);
     }
+  }
+
+  async searchByCriteria(
+    criterias: ICriteria[],
+  ): Promise<SearchResult<Category>> {
+    let query: QueryDslQueryContainer = {};
+    for (const criteria of criterias) {
+      query = criteria.applyCriteria(query);
+    }
+    console.dir(query, { depth: null });
+    const result = await this.esClient.search({
+      body: {
+        query,
+      },
+    });
+    return new SearchResult({
+      total: result.body.hits.total.value,
+      current_page: 1,
+      per_page: 15,
+      items: result.body.hits.hits.map((hit: any) =>
+        CategoryElasticSearchMapper.toEntity(hit._id, hit._source),
+      ),
+    });
   }
 
   async delete(id: CategoryId): Promise<void> {

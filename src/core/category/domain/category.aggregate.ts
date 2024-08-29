@@ -1,7 +1,7 @@
-import { AggregateRoot } from '@core/shared/domain/aggregate-root';
-import { Uuid } from '@core/shared/domain/value-objects/uuid.vo';
-import CategoryValidatorFactory from './category-aggregate.validator';
 import { CategoryFakeBuilder } from './category-fake.builder';
+import { Uuid } from '../../shared/domain/value-objects/uuid.vo';
+import CategoryValidatorFactory from './category-aggregate.validator';
+import { AggregateRoot } from '../../shared/domain/aggregate-root';
 
 export type CategoryConstructorProps = {
   category_id: CategoryId;
