@@ -1,4 +1,4 @@
-import { IRepository } from '@core/shared/domain/repository/repository-interface';
+import { IRepository } from '@core/shared/domain/repository/repository.interface';
 import {
   SearchParams,
   SearchParamsConstructorProps,
